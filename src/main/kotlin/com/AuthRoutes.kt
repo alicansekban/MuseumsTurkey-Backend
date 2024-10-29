@@ -16,6 +16,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.apache.commons.codec.digest.DigestUtils
 
 fun Route.signUp(
     hashingService: HashingService,
@@ -61,11 +62,13 @@ fun Route.signIn(
             call.respond(HttpStatusCode.BadRequest)
             return@post
         }
+
         val user = userDataSource.getUserByUsername(request.username)
-        if (user == null) {
-            call.respond(HttpStatusCode.Conflict,"Incorrect username or password")
+        if(user == null) {
+            call.respond(HttpStatusCode.Conflict, "User not found")
             return@post
         }
+
         val isValidPassword = hashingService.verify(
             value = request.password,
             saltedHash = SaltedHash(
@@ -73,29 +76,28 @@ fun Route.signIn(
                 salt = user.salt
             )
         )
-        if (isValidPassword.not()) {
-            call.respond(HttpStatusCode.Conflict,"Incorrect username or password")
+        if(!isValidPassword) {
+            println("Entered hash: ${DigestUtils.sha256Hex("${user.salt}${request.password}")}, Hashed PW: ${user.password}")
+            call.respond(HttpStatusCode.Conflict, "Incorrect username or password")
             return@post
         }
 
         val token = tokenService.generate(
             config = tokenConfig,
-              TokenClaim(
+            TokenClaim(
                 name = "userId",
                 value = user.id.toString()
             )
-
         )
+
         call.respond(
             status = HttpStatusCode.OK,
             message = AuthResponse(
                 token = token
             )
         )
-
     }
 }
-
 fun Route.authenticate() {
     authenticate {
         get("authenticate") {

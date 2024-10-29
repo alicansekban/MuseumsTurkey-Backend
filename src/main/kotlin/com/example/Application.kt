@@ -2,7 +2,7 @@ package com.example
 
 import com.example.data.dataSource.MongoUserDataSource
 import com.example.plugins.*
-import com.example.security.hashing.SH256HashingService
+import com.example.security.hashing.SHA256HashingService
 import com.example.security.token.JwtTokenService
 import com.example.security.token.TokenConfig
 import io.ktor.server.application.*
@@ -29,7 +29,7 @@ fun Application.module() {
         expiresIn = 365L * 1000L * 60L * 60L * 24,
         secret = System.getenv("JWT_SECRET")
     )
-    val hashingService = SH256HashingService()
+    val hashingService = SHA256HashingService()
 
     configureMonitoring()
     configureSerialization()
