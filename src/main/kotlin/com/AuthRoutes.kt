@@ -29,25 +29,25 @@ fun Route.signUp(
         }
 
         val areFieldsBlank = request.username.isBlank() || request.password.isBlank()
-        val isPwTooShort = request.password.length < 8
-
-        if (areFieldsBlank || isPwTooShort) {
+        val isPwTooShort = request.password.length < 5
+        if(areFieldsBlank || isPwTooShort) {
             call.respond(HttpStatusCode.Conflict)
             return@post
         }
+
         val saltedHash = hashingService.generateSaltedHash(request.password)
         val user = User(
             username = request.username,
-            password = request.password,
+            password = saltedHash.hash,
             salt = saltedHash.salt
         )
         val wasAcknowledged = userDataSource.insertUser(user)
-        if (!wasAcknowledged) {
+        if(!wasAcknowledged)  {
             call.respond(HttpStatusCode.Conflict)
             return@post
         }
-        call.respond(HttpStatusCode.OK)
 
+        call.respond(HttpStatusCode.OK)
     }
 }
 
